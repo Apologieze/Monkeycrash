@@ -15,6 +15,10 @@ root.configure(bg="#36393F")
 
 label = tk.Label(root, text="Hello World")
 label.pack()
+a = tk.PhotoImage(file = "Image/button.png")
+button = tk.Button(root, text="Fermer", borderwidth=0)
+button.pack()
+tk.Label(image=a).pack()
 
 def dark_bar(window):
     window.update()
@@ -31,3 +35,4 @@ def dark_bar(window):
 
 dark_bar(root)
 root.mainloop()
+

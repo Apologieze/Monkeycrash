@@ -5,7 +5,6 @@ from tkinter import Tk
 import ctypes as ct
 from random import randint
 
-
 DEBUG = False
 FULLSCREEN = False
 running = False
@@ -14,16 +13,18 @@ res = (screen_width, screen_height) if FULLSCREEN else (1200, 800)
 mid_screen = (res[0] // 2, res[1] // 2)
 
 pg.init()
+pg.mixer.init(channels=1)
+pg.mixer.music.load("Music/winning.mp3")
+pg.display.set_icon(pg.image.load("Image/icon.png"))
 screen = pg.display.set_mode(res, pg.FULLSCREEN) if FULLSCREEN else pg.display.set_mode(res)
-pg.display.set_caption('Monke Crash')
+pg.display.set_caption('MonkeyCrash')
 clock = pg.time.Clock()
 bet_balance = 0.0
 initial_bet = 0.0
 live_bet = 0.0
-# pg.mouse.set_visible(False)
 
-"""Fonction pour passer la fenêtre en thème sombre"""
 def dark_bar():
+    """Fonction pour passer la fenêtre en thème sombre"""
     DWMWA_USE_IMMERSIVE_DARK_MODE = 20
     set_window_attribute = ct.windll.dwmapi.DwmSetWindowAttribute
     hwnd = pg.display.get_wm_info()["window"]
@@ -58,7 +59,6 @@ class Game_state():
         else:
             return randint(5000, 10000) / 100
 
-
 class Rocket(pg.sprite.Sprite):
     def __init__(self,game):
         super().__init__()
@@ -69,6 +69,7 @@ class Rocket(pg.sprite.Sprite):
 
         self.rocket_anim = [rocket1,rocket2,rocket3]
         self.rocket_index = 1
+        self.explosion = pg.mixer.Sound("Music/explosion.wav")
         self.move_x = 3
         self.move_y = -1
         self.left = False
@@ -81,6 +82,7 @@ class Rocket(pg.sprite.Sprite):
         self.multi_max = self.get_multiplicateur()
         print(self.multi_max)
         self.live_multi = 1.0
+        self.multi_color = "white"
         self.multi_add = 0.003
         self.text_multi = big_font.render(str(self.live_multi)+'x', True, 'white')
         self.text_multi_rect = self.text_multi.get_rect(midleft=(self.rect.midright))
@@ -98,7 +100,9 @@ class Rocket(pg.sprite.Sprite):
 
     def descendre(self):
         if self.fall_index < 50:
-            new_round()
+            if self.fall_index == 0:
+                new_round()
+                self.explosion.play()
             self.fall_index += 1
         elif self.rect.bottom+110 < res[1]:
             self.rect.bottom += 10
@@ -118,13 +122,22 @@ class Rocket(pg.sprite.Sprite):
         self.image = self.rocket_anim[n]
         self.rocket_index = n
 
-    def multi_update(self):
+    def multi_update(self):  # sourcery skip: assign-if-exp
         if self.live_multi >= self.multi_max:
             self.fall = True
+            self.multi_color = "#ff0000"
             self.change_animation(2)
         if not self.fall:
             self.live_multi += self.multi_add
-        self.text_multi = big_font.render(str(self.live_multi)[0:4]+'x', True, 'white')
+            if self.live_multi > 1.8:
+                if self.live_multi > 2.8:
+                    if self.live_multi > 6:
+                        self.multi_color = "#ffd557"
+                    else:
+                        self.multi_color = "#63ffa9"
+                else:
+                    self.multi_color = "#7adfff"
+        self.text_multi = big_font.render(str(self.live_multi)[0:4]+'x', True, self.multi_color)
         if self.left:
             self.text_multi_rect = self.text_multi.get_rect(midright=(self.rect.left, self.rect.centery))
             if self.live_multi > 9:
@@ -147,6 +160,7 @@ class Rocket(pg.sprite.Sprite):
         global running
         self.rect = self.image.get_rect(bottomleft=(-20, res[1] - 150))
         self.live_multi = 1.0
+        self.multi_color = "white"
         self.multi_add = 0.003
         self.move_x = 3
         self.move_y = -1
@@ -250,7 +264,7 @@ class Button():
         if color == 3:
             self.color_passive, self.color_active = '#D23636', '#881f1e'
         elif color == 2:
-            self.color_passive, self.color_active = '#fb7e18', '#d66e1a'
+            self.color_passive, self.color_active = '#fb7e18', '#c36518'
         self.text = font.render(text, True, 'white')
         self.text_rect = self.text.get_rect(center=self.rect.center)
 
@@ -331,10 +345,12 @@ class Timer():
             screen.blit(self.text, self.text_rect)
             if self.second == 0:
                 running = True
+                pg.mixer.music.play()
                 self.reset()
 
 def new_round():
     global live_bet, initial_bet
+    pg.mixer.music.stop()
     live_bet, initial_bet = 0.0, 0.0
     gui.reset_live_bet()
 
@@ -342,10 +358,10 @@ if not FULLSCREEN:
     dark_bar()
 
 """Création de toutes les instances"""
-number_font = pg.font.Font("Image/Poppins2.ttf", 90)
-big_font = pg.font.Font("Image/Poppins2.ttf", 40)
-mid_font = pg.font.Font("Image/Poppins2.ttf", 30)
-small_font = pg.font.Font("Image/Poppins2.ttf", 20)
+number_font = pg.font.Font("Font/Poppins2.ttf", 90)
+big_font = pg.font.Font("Font/Poppins2.ttf", 40)
+mid_font = pg.font.Font("Font/Poppins2.ttf", 30)
+small_font = pg.font.Font("Font/Poppins2.ttf", 20)
 
 game_state = Game_state(100.0)
 rocket = pg.sprite.GroupSingle()
