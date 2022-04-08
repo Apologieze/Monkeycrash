@@ -5,7 +5,7 @@ from tkinter import Tk
 import ctypes as ct
 from random import randint
 
-DEBUG = False
+DEBUG = True
 FULLSCREEN = False
 running = False
 screen_width, screen_height = Tk().winfo_screenwidth(), Tk().winfo_screenheight()
@@ -41,7 +41,8 @@ class Game_state():
 
     def generate_multiplicateur(self):
         choice = randint(0, 99)
-        print("choice", choice)
+        if DEBUG:
+            print("choice", choice)
         if choice < 10:
             return 1 + (randint(0, 5) / 100)
         elif choice < 40:
@@ -80,7 +81,6 @@ class Rocket(pg.sprite.Sprite):
         self.rect = self.image.get_rect(bottomleft=(-20,res[1]-150))
 
         self.multi_max = self.get_multiplicateur()
-        print(self.multi_max)
         self.live_multi = 1.0
         self.multi_color = "white"
         self.multi_add = 0.003
@@ -88,7 +88,10 @@ class Rocket(pg.sprite.Sprite):
         self.text_multi_rect = self.text_multi.get_rect(midleft=(self.rect.midright))
 
     def get_multiplicateur(self):
-        return self.game.generate_multiplicateur()
+        r = self.game.generate_multiplicateur()
+        if DEBUG:
+            print(r)
+        return r
 
     def monter(self):
         if self.move_x > 0:
@@ -277,7 +280,7 @@ class Button():
         change = [100,10,1,0.1]
         if self.n_id >= 0:
             if bet_balance + change[self.n_id] > game_state.balance:
-                bet_balance = round(game_state.balance, 1)
+                bet_balance = game_state.balance
             else:
                 bet_balance = round(bet_balance+change[self.n_id],1)
         elif self.n_id == -2:
@@ -388,7 +391,6 @@ class Historic():
 def new_round():
     global live_bet, initial_bet
     pg.mixer.music.stop()
-    print("a")
     live_bet, initial_bet = 0.0, 0.0
     gui.reset_live_bet()
 
