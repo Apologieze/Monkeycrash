@@ -102,6 +102,8 @@ class Rocket(pg.sprite.Sprite):
         if self.fall_index < 50:
             if self.fall_index == 0:
                 new_round()
+                historic.add_value(self.multi_max,self.multi_color)
+                self.multi_color = "#ff0000"
                 self.explosion.play()
             self.fall_index += 1
         elif self.rect.bottom+110 < res[1]:
@@ -125,7 +127,6 @@ class Rocket(pg.sprite.Sprite):
     def multi_update(self):  # sourcery skip: assign-if-exp
         if self.live_multi >= self.multi_max:
             self.fall = True
-            self.multi_color = "#ff0000"
             self.change_animation(2)
         if not self.fall:
             self.live_multi += self.multi_add
@@ -366,12 +367,12 @@ class Historic():
     def add_value(self,n,color):
         if self.len == 5:
             self.text_list.pop()
-            self.text_rect.pop()
+            self.rect_list.pop()
         else:
             self.len += 1
-        text = small_font.render(str(n), True, color)
-        self.rect_list.append(text.get_rect(topleft=(0,0)))
-        self.text_list.append(text)
+        text = small_font.render(str(round(n,2)), True, color)
+        self.rect_list.insert(0,text.get_rect(topleft=(0,0)))
+        self.text_list.insert(0,text)
         self.refresh()
 
     def refresh(self):
@@ -387,6 +388,7 @@ class Historic():
 def new_round():
     global live_bet, initial_bet
     pg.mixer.music.stop()
+    print("a")
     live_bet, initial_bet = 0.0, 0.0
     gui.reset_live_bet()
 
@@ -410,8 +412,7 @@ rocket.add(Rocket(game_state))
 courbe = Courbe()
 gui = Gui(game_state)
 historic = Historic()
-historic.add_value(5.06,"red")
-historic.add_value(43.72,"white")
+
 
 timer = Timer()
 
