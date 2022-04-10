@@ -1,9 +1,11 @@
-from random import randint
+import time
+import subprocess
 import pygame as pg
 from sys import exit
 from tkinter import Tk
 import ctypes as ct
 from random import randint
+import json
 
 DEBUG = True
 FULLSCREEN = False
@@ -11,6 +13,8 @@ running = False
 screen_width, screen_height = Tk().winfo_screenwidth(), Tk().winfo_screenheight()
 res = (screen_width, screen_height) if FULLSCREEN else (1200, 800)
 mid_screen = (res[0] // 2, res[1] // 2)
+with open('value.json', 'r') as f:
+  data = json.load(f)
 
 pg.init()
 pg.mixer.init(channels=1)
@@ -32,8 +36,11 @@ def dark_bar():
     value = 2
     value = ct.c_int(value)
     set_window_attribute(hwnd, rendering_policy, ct.byref(value),ct.sizeof(value))
-    pg.display.set_mode((1,1))
+    pg.display.set_mode((res[0]-1,res[1]))
     pg.display.set_mode(res, pg.RESIZABLE)
+
+if not FULLSCREEN:
+    dark_bar()
 
 class Game_state():
     def __init__(self,balance=0.0):
@@ -297,7 +304,7 @@ class Button():
 
     def retirer(self):
         global live_bet
-        game_state.balance += live_bet
+        change_balance(live_bet)
         gui.reset_balance_text()
         live_bet = 0.0
         gui.cashout = True
@@ -344,7 +351,7 @@ class Timer():
         self.text_rect = self.text.get_rect(center=self.rect.center)
 
     def reset(self):
-        game_state.balance -= initial_bet
+        change_balance(-initial_bet)
         gui.reset_balance_text()
 
         self.angle = 90
@@ -394,12 +401,14 @@ def new_round():
     live_bet, initial_bet = 0.0, 0.0
     gui.reset_live_bet()
 
+def change_balance(n):
+    game_state.balance += n
+    with open('value.json', 'w') as json_file:
+        json.dump({"balance":round(game_state.balance,2)}, json_file)
+
 def rocket_video_reset(h):
     hauteur = res[1]-rocket.sprite.rect.bottom
     rocket.sprite.rect.bottom = res[1]-hauteur
-
-if not FULLSCREEN:
-    dark_bar()
 
 """Création de toutes les instances"""
 number_font = pg.font.Font("Font/Poppins2.ttf", 90)
@@ -407,7 +416,7 @@ big_font = pg.font.Font("Font/Poppins2.ttf", 40)
 mid_font = pg.font.Font("Font/Poppins2.ttf", 30)
 small_font = pg.font.Font("Font/Poppins2.ttf", 20)
 
-game_state = Game_state(100.0)
+game_state = Game_state(data["balance"])
 rocket = pg.sprite.GroupSingle()
 rocket.add(Rocket(game_state))
 
@@ -429,13 +438,15 @@ while True:
             rocket.sprite.rect.bottom = res[1]-hauteur
             # screen = pg.display.set_mode(res, pg.RESIZABLE)
         if event.type == pg.QUIT:
+            import launcher
             pg.quit()
             exit()
+
 
     mou = pg.mouse.get_pressed()
 
     pos = pg.mouse.get_pos()
-    screen.fill("#151937")
+    screen.fill((21,25,55))
 
     courbe.update()
 
