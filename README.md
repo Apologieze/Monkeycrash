@@ -3,6 +3,7 @@ A gambling crash game made for a school project with pygame
 
 # Download & install
 Dependencies: Python, Pygame
+
 Pygame can be download with pip:
 
 `pip install pygame`
