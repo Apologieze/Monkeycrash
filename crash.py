@@ -1,5 +1,3 @@
-import time
-import subprocess
 import pygame as pg
 from sys import exit
 from tkinter import Tk
@@ -7,25 +5,6 @@ import ctypes as ct
 from random import randint
 import json
 
-DEBUG = True
-FULLSCREEN = False
-running = False
-screen_width, screen_height = Tk().winfo_screenwidth(), Tk().winfo_screenheight()
-res = (screen_width, screen_height) if FULLSCREEN else (1200, 800)
-mid_screen = (res[0] // 2, res[1] // 2)
-with open('value.json', 'r') as f:
-  data = json.load(f)
-
-pg.init()
-pg.mixer.init(channels=1)
-pg.mixer.music.load("Music/winning.mp3")
-pg.display.set_icon(pg.image.load("Image/icon.png"))
-screen = pg.display.set_mode(res, pg.FULLSCREEN) if FULLSCREEN else pg.display.set_mode(res, pg.RESIZABLE)
-pg.display.set_caption('MonkeyCrash')
-clock = pg.time.Clock()
-bet_balance = 0.0
-initial_bet = 0.0
-live_bet = 0.0
 
 def dark_bar():
     """Fonction pour passer la fenêtre en thème sombre"""
@@ -36,11 +15,8 @@ def dark_bar():
     value = 2
     value = ct.c_int(value)
     set_window_attribute(hwnd, rendering_policy, ct.byref(value),ct.sizeof(value))
-    pg.display.set_mode((res[0]-1,res[1]))
-    pg.display.set_mode(res, pg.RESIZABLE)
-
-if not FULLSCREEN:
-    dark_bar()
+    pg.display.set_mode((gen.res[0]-1,gen.res[1]))
+    pg.display.set_mode(gen.res, pg.RESIZABLE)
 
 class Game_state():
     def __init__(self,balance=0.0):
@@ -48,7 +24,7 @@ class Game_state():
 
     def generate_multiplicateur(self):
         choice = randint(0, 99)
-        if DEBUG:
+        if gen.DEBUG:
             print("choice", choice)
         if choice < 10:
             return 1 + (randint(0, 5) / 100)
@@ -85,24 +61,24 @@ class Rocket(pg.sprite.Sprite):
         self.fall_index = 0
 
         self.image = self.rocket_anim[1]
-        self.rect = self.image.get_rect(bottomleft=(-20,res[1]-150))
+        self.rect = self.image.get_rect(bottomleft=(-20, gen.res[1]-150))
 
         self.multi_max = self.get_multiplicateur()
         self.live_multi = 1.0
         self.multi_color = "white"
         self.multi_add = 0.003
-        self.text_multi = big_font.render(str(self.live_multi)+'x', True, 'white')
+        self.text_multi = gen.big_font.render(str(self.live_multi)+'x', True, 'white')
         self.text_multi_rect = self.text_multi.get_rect(midleft=(self.rect.midright))
 
     def get_multiplicateur(self):
         r = self.game.generate_multiplicateur()
-        if DEBUG:
+        if gen.DEBUG:
             print(r)
         return r
 
     def monter(self):
         if self.move_x > 0:
-            if self.rect.right-20 > res[0]:
+            if self.rect.right-20 > gen.res[0]:
                 self.move_x = 0
         if self.move_y != 0:
             if self.rect.top < 0:
@@ -112,11 +88,11 @@ class Rocket(pg.sprite.Sprite):
         if self.fall_index < 50:
             if self.fall_index == 0:
                 new_round()
-                historic.add_value(self.multi_max,self.multi_color)
+                gen.historic.add_value(self.multi_max,self.multi_color)
                 self.multi_color = "#ff0000"
                 self.explosion.play()
             self.fall_index += 1
-        elif self.rect.bottom+110 < res[1]:
+        elif self.rect.bottom+110 < gen.res[1]:
             self.rect.bottom += 10
         else:
             self.fall = False
@@ -148,28 +124,26 @@ class Rocket(pg.sprite.Sprite):
                         self.multi_color = "#63ffa9"
                 else:
                     self.multi_color = "#7adfff"
-        self.text_multi = big_font.render(str(self.live_multi)[0:4]+'x', True, self.multi_color)
+        self.text_multi = gen.big_font.render(str(self.live_multi)[0:4]+'x', True, self.multi_color)
         if self.left:
             self.text_multi_rect = self.text_multi.get_rect(midright=(self.rect.left, self.rect.centery))
             if self.live_multi > 9:
                 self.multi_add = 0.05
         else:
             self.text_multi_rect = self.text_multi.get_rect(midleft=(self.rect.right-30,self.rect.centery))
-            if self.text_multi_rect.right+20 >= res[0]:
+            if self.text_multi_rect.right+20 >= gen.res[0]:
                 self.left = True
                 self.multi_add = 0.01
                 self.change_animation(1)
-        screen.blit(self.text_multi, self.text_multi_rect)
+        gen.screen.blit(self.text_multi, self.text_multi_rect)
 
     def update_live_bet(self):
-        global live_bet
-        if not gui.cashout:
-            arrondi = 1 if live_bet > 99 else 2
-            live_bet = round(initial_bet * self.live_multi,arrondi)
+        if not gen.gui.cashout:
+            arrondi = 1 if gen.live_bet > 99 else 2
+            gen.live_bet = round(gen.initial_bet * self.live_multi,arrondi)
 
     def reset(self):
-        global running
-        self.rect = self.image.get_rect(bottomleft=(-20, res[1] - 150))
+        self.rect = self.image.get_rect(bottomleft=(-20, gen.res[1] - 150))
         self.live_multi = 1.0
         self.multi_color = "white"
         self.multi_add = 0.003
@@ -177,11 +151,11 @@ class Rocket(pg.sprite.Sprite):
         self.move_y = -1
         self.left = False
         self.change_animation(1)
-        running = False
+        gen.running = False
         self.multi_max = self.get_multiplicateur()
 
     def update(self):
-        if running:
+        if gen.running:
             if not self.left and not self.fall:
                 if self.rocket_index == 1:
                     self.change_animation(0)
@@ -192,63 +166,63 @@ class Rocket(pg.sprite.Sprite):
 
 class Courbe():
     def __init__(self):
-        self.rect = pg.Rect(0,0,res[0]-10,res[1]-10)
+        self.rect = pg.Rect(0,0,gen.res[0]-10,gen.res[1]-10)
         self.color = "#c9204d"
         self.angle = -0.1
-        self.rect.bottomleft = 0, res[1]
+        self.rect.bottomleft = 0, gen.res[1]
 
     def update(self):
-        self.rect.height = res[1]*2-rocket.sprite.rect.center[1]*2.2-150
-        self.rect.width = rocket.sprite.rect.center[0]*2
-        self.rect.midbottom = (0, res[1]-150)
-        pg.draw.arc(screen, self.color, self.rect, 4.71, self.angle, 5)
+        self.rect.height = gen.res[1]*2-gen.rocket.sprite.rect.center[1]*2.2-150
+        self.rect.width = gen.rocket.sprite.rect.center[0]*2
+        self.rect.midbottom = (0, gen.res[1]-150)
+        pg.draw.arc(gen.screen, self.color, self.rect, 4.71, self.angle, 5)
 
 class Gui():
     def __init__(self,game):
         self.game = game
         self.cashout = False
-        self.screen_rect = pg.Rect(res[0]-555, res[1]-70, 330,60)
-        self.text_screen = big_font.render(str(bet_balance)+'¥', True, 'white')
-        self.static_text = big_font.render("Balance:", True, '#fab3fe')
-        self.balance_text = big_font.render(str(self.game.balance) + '¥', True, '#fab3fe')
+        self.screen_rect = pg.Rect(gen.res[0]-555, gen.res[1]-70, 330,60)
+        self.text_screen = gen.big_font.render(str(gen.bet_balance)+'¥', True, 'white')
+        self.static_text = gen.big_font.render("Balance:", True, '#fab3fe')
+        self.balance_text = gen.big_font.render(str(self.game.balance) + '¥', True, '#fab3fe')
 
         self.video_size_reset()
 
     def video_size_reset(self):
-        self.point_y = res[1] - 148
-        self.background_rect = pg.Rect(0, self.point_y, res[0], 150)
-        self.screen_rect = pg.Rect(res[0] - 555, res[1] - 70, 330, 60)
+        self.point_y = gen.res[1] - 148
+        self.background_rect = pg.Rect(0, self.point_y, gen.res[0], 150)
+        self.screen_rect = pg.Rect(gen.res[0] - 555, gen.res[1] - 70, 330, 60)
         self.text_screen_rect = self.text_screen.get_rect(center=self.screen_rect.center)
-        self.static_text_rect = self.static_text.get_rect(bottomleft=(10, res[1] - 70))
-        self.balance_text_rect = self.balance_text.get_rect(bottomleft=(20, res[1] - 20))
+        self.static_text_rect = self.static_text.get_rect(bottomleft=(10, gen.res[1] - 70))
+        self.balance_text_rect = self.balance_text.get_rect(bottomleft=(20, gen.res[1] - 20))
 
-        self.bet_button = Button(res[0] - 200, res[1] - 110, 168, 66, 1, "Placer", big_font, -1, self)
-        self.back_bet_button = Button(res[0] - 820, res[1] - 120, 168, 66, 2, "Retirer", big_font, -3, self)
-        self.hundred_button = Button(res[0] - 280, res[1] - 110, 60, 30, 0, '+100', small_font, 0, self)
-        self.ten_button = Button(res[0] - 350, res[1] - 110, 60, 30, 0, '+10', small_font, 1, self)
-        self.one_button = Button(res[0] - 420, res[1] - 110, 60, 30, 0, '+1', small_font, 2, self)
-        self.cents_button = Button(res[0] - 490, res[1] - 110, 60, 30, 0, '+0.1', small_font, 3, self)
-        self.x_button = Button(res[0] - 560, res[1] - 110, 60, 30, 3, 'X', small_font, -2, self)
+        self.bet_button = Button(gen.res[0] - 200, gen.res[1] - 110, 168, 66, 1, "Placer", gen.big_font, -1, self)
+        self.back_bet_button = Button(gen.res[0] - 820, gen.res[1] - 120, 168, 66, 2, "Retirer", gen.big_font, -3, self)
+        self.hundred_button = Button(gen.res[0] - 280, gen.res[1] - 110, 60, 30, 0, '+100', gen.small_font, 0, self)
+        self.ten_button = Button(gen.res[0] - 350, gen.res[1] - 110, 60, 30, 0, '+10', gen.small_font, 1, self)
+        self.one_button = Button(gen.res[0] - 420, gen.res[1] - 110, 60, 30, 0, '+1', gen.small_font, 2, self)
+        self.cents_button = Button(gen.res[0] - 490, gen.res[1] - 110, 60, 30, 0, '+0.1', gen.small_font, 3, self)
+        self.x_button = Button(gen.res[0] - 560, gen.res[1] - 110, 60, 30, 3, 'X', gen.small_font, -2, self)
         self.reset_live_bet()
 
     def reset_text(self):
-        self.text_screen = big_font.render(str(bet_balance)+'¥', True, 'white')
+        self.text_screen = gen.big_font.render(str(gen.bet_balance)+'¥', True, 'white')
         self.text_screen_rect = self.text_screen.get_rect(center = self.screen_rect.center)
 
     def reset_balance_text(self):
         aff_balance = str(int(self.game.balance))+str(self.game.balance%1)[1:4]
-        self.balance_text = big_font.render(aff_balance + '¥', True, '#fab3fe')
-        self.balance_text_rect = self.balance_text.get_rect(bottomleft=(20, res[1] - 20))
+        self.balance_text = gen.big_font.render(aff_balance + '¥', True, '#fab3fe')
+        self.balance_text_rect = self.balance_text.get_rect(bottomleft=(20, gen.res[1] - 20))
 
     def reset_live_bet(self):
-        self.text_live_bet = mid_font.render("Mise en cours: "+str(live_bet)+'¥', True, 'white')
+        self.text_live_bet = gen.mid_font.render("Mise en cours: "+str(gen.live_bet)+'¥', True, 'white')
         self.text_live_bet_rect = self.text_live_bet.get_rect(midleft = (self.screen_rect.left-310, self.screen_rect.centery+15))
 
     def update(self):
-        pg.draw.rect(screen, "#262626", self.background_rect)
-        pg.draw.rect(screen, (20,20,20), self.screen_rect, border_radius=6)
-        pg.draw.line(screen, "#853370", (0, self.point_y), (res[0], self.point_y), 7)
-        if not running:
+        pg.draw.rect(gen.screen, "#262626", self.background_rect)
+        pg.draw.rect(gen.screen, (20,20,20), self.screen_rect, border_radius=6)
+        pg.draw.line(gen.screen, "#853370", (0, self.point_y), (gen.res[0], self.point_y), 7)
+        if not gen.running:
             self.bet_button.update()
             self.hundred_button.update()
             self.ten_button.update()
@@ -258,15 +232,15 @@ class Gui():
             self.cashout = False
         else:
             self.reset_live_bet()
-            if live_bet != 0:
+            if gen.live_bet != 0:
                 self.back_bet_button.update()
 
-        if live_bet >0:
-            screen.blit(self.text_live_bet, self.text_live_bet_rect)
+        if gen.live_bet >0:
+            gen.screen.blit(self.text_live_bet, self.text_live_bet_rect)
 
-        screen.blit(self.text_screen, self.text_screen_rect)
-        screen.blit(self.static_text, self.static_text_rect)
-        screen.blit(self.balance_text, self.balance_text_rect)
+        gen.screen.blit(self.text_screen, self.text_screen_rect)
+        gen.screen.blit(self.static_text, self.static_text_rect)
+        gen.screen.blit(self.balance_text, self.balance_text_rect)
 
 class Button():
     def __init__(self,left,top,width,height,color,text,font,n_id,receiver=None):
@@ -283,19 +257,18 @@ class Button():
         self.text_rect = self.text.get_rect(center=self.rect.center)
 
     def adding(self):
-        global bet_balance, live_bet, initial_bet
         change = [100,10,1,0.1]
         if self.n_id >= 0:
-            if bet_balance + change[self.n_id] > game_state.balance:
-                bet_balance = game_state.balance
+            if gen.bet_balance + change[self.n_id] > gen.game_state.balance:
+                gen.bet_balance = gen.game_state.balance
             else:
-                bet_balance = round(bet_balance+change[self.n_id],1)
+                gen.bet_balance = round(gen.bet_balance+change[self.n_id],1)
         elif self.n_id == -2:
-            bet_balance = 0.0
+            gen.bet_balance = 0.0
         elif self.n_id == -1:
-            if bet_balance <= game_state.balance:
-                initial_bet = bet_balance
-                live_bet = bet_balance
+            if gen.bet_balance <= gen.game_state.balance:
+                gen.initial_bet = gen.bet_balance
+                gen.live_bet = gen.bet_balance
             self.receiver.reset_live_bet()
         elif self.n_id == -3:
             self.retirer()
@@ -303,16 +276,15 @@ class Button():
         self.receiver.reset_text()
 
     def retirer(self):
-        global live_bet
-        change_balance(live_bet)
-        gui.reset_balance_text()
-        live_bet = 0.0
-        gui.cashout = True
+        change_balance(gen.live_bet)
+        gen.gui.reset_balance_text()
+        gen.live_bet = 0.0
+        gen.gui.cashout = True
 
     def update(self):
         #color = self.color_active if self.rect.collidepoint(pos) and not mou[0] else self.color_passive
-        if self.rect.collidepoint(pos):
-            if mou[0]:
+        if self.rect.collidepoint(gen.pos):
+            if gen.mou[0]:
                 color = self.color_passive
                 if not self.triggered:
                     self.adding()
@@ -326,8 +298,8 @@ class Button():
             if self.triggered:
                 self.triggered = False
 
-        pg.draw.rect(screen, color, self.rect, border_radius=11)
-        screen.blit(self.text, self.text_rect)
+        pg.draw.rect(gen.screen, color, self.rect, border_radius=11)
+        gen.screen.blit(self.text, self.text_rect)
 
 class Timer():
     def __init__(self):
@@ -336,35 +308,34 @@ class Timer():
         self.color = "#0e9dd9"
         self.angle = 90
         self.second = 10
-        self.text = number_font.render(str(self.second), True, 'white')
+        self.text = gen.number_font.render(str(self.second), True, 'white')
         self.text_rect = self.text.get_rect(center=self.rect.center)
 
     def video_size_reset(self):
-        self.rect.center = mid_screen
+        self.rect.center = gen.mid_screen
 
     def rad(self,degree):
         return degree*0.01745329251
 
     def text_refresh(self):
         self.second = 10-int((self.angle-90)*10/-360)
-        self.text = number_font.render(str(self.second), True, 'white')
+        self.text = gen.number_font.render(str(self.second), True, 'white')
         self.text_rect = self.text.get_rect(center=self.rect.center)
 
     def reset(self):
-        change_balance(-initial_bet)
-        gui.reset_balance_text()
+        change_balance(-gen.initial_bet)
+        gen.gui.reset_balance_text()
 
         self.angle = 90
 
     def update(self):
-        global running
-        if not running:
+        if not gen.running:
             self.angle -= 1.2
             self.text_refresh()
-            pg.draw.arc(screen, self.color, self.rect, 1.57, self.rad(self.angle), 8)
-            screen.blit(self.text, self.text_rect)
+            pg.draw.arc(gen.screen, self.color, self.rect, 1.57, self.rad(self.angle), 8)
+            gen.screen.blit(self.text, self.text_rect)
             if self.second == 0:
-                running = True
+                gen.running = True
                 pg.mixer.music.play()
                 self.reset()
 
@@ -380,7 +351,7 @@ class Historic():
             self.rect_list.pop()
         else:
             self.len += 1
-        text = small_font.render(str(round(n,2)), True, color)
+        text = gen.small_font.render(str(round(n,2)), True, color)
         self.rect_list.insert(0,text.get_rect(topleft=(0,0)))
         self.text_list.insert(0,text)
         self.refresh()
@@ -392,72 +363,106 @@ class Historic():
 
     def update(self):
         for i in range(self.len):
-            screen.blit(self.text_list[i], self.rect_list[i])
+            gen.screen.blit(self.text_list[i], self.rect_list[i])
 
 
 def new_round():
-    global live_bet, initial_bet
     pg.mixer.music.stop()
-    live_bet, initial_bet = 0.0, 0.0
-    gui.reset_live_bet()
+    gen.live_bet, gen.initial_bet = 0.0, 0.0
+    gen.gui.reset_live_bet()
 
 def change_balance(n):
-    game_state.balance += n
+    gen.game_state.balance += n
     with open('value.json', 'w') as json_file:
-        json.dump({"balance":round(game_state.balance,2)}, json_file)
+        json.dump({"balance":round(gen.game_state.balance,2)}, json_file)
 
 def rocket_video_reset(h):
-    hauteur = res[1]-rocket.sprite.rect.bottom
-    rocket.sprite.rect.bottom = res[1]-hauteur
-
-"""Création de toutes les instances"""
-number_font = pg.font.Font("Font/Poppins2.ttf", 90)
-big_font = pg.font.Font("Font/Poppins2.ttf", 40)
-mid_font = pg.font.Font("Font/Poppins2.ttf", 30)
-small_font = pg.font.Font("Font/Poppins2.ttf", 20)
-
-game_state = Game_state(data["balance"])
-rocket = pg.sprite.GroupSingle()
-rocket.add(Rocket(game_state))
-
-courbe = Courbe()
-gui = Gui(game_state)
-historic = Historic()
+    hauteur = gen.res[1]-gen.rocket.sprite.rect.bottom
+    gen.rocket.sprite.rect.bottom = gen.res[1]-hauteur
 
 
-timer = Timer()
+class Gen():
+    def crea(self):
+        self.DEBUG = True
+        self.FULLSCREEN = False
+        self.CHANGESCENE = 0
+        self.running = False
+        screen_width, screen_height = Tk().winfo_screenwidth(), Tk().winfo_screenheight()
+        self.res = (screen_width, screen_height) if self.FULLSCREEN else (1200, 800)
+        self.mid_screen = (self.res[0] // 2, self.res[1] // 2)
+        with open('value.json', 'r') as f:
+            self.data = json.load(f)
 
-while True:
-    for event in pg.event.get():
-        if event.type == pg.VIDEORESIZE:
-            hauteur = res[1] - rocket.sprite.rect.bottom
-            res = (event.w, event.h)
-            mid_screen = (res[0] // 2, res[1] // 2)
-            gui.video_size_reset()
-            timer.video_size_reset()
-            rocket.sprite.rect.bottom = res[1]-hauteur
-            # screen = pg.display.set_mode(res, pg.RESIZABLE)
-        if event.type == pg.QUIT:
-            import launcher
-            pg.quit()
-            exit()
+        pg.init()
+        pg.mixer.init(channels=1)
+        pg.mixer.music.load("Music/winning.mp3")
+        pg.display.set_icon(pg.image.load("Image/icon.png"))
+        self.screen = pg.display.set_mode(self.res, pg.FULLSCREEN) if self.FULLSCREEN else pg.display.set_mode(self.res,
+                                                                                                               pg.RESIZABLE)
+        pg.display.set_caption('MonkeyCrash')
+        self.clock = pg.time.Clock()
+        self.bet_balance = 0.0
+        self.initial_bet = 0.0
+        self.live_bet = 0.0
+
+        """Création de toutes les instances"""
+        self.number_font = pg.font.Font("Font/Poppins2.ttf", 90)
+        self.big_font = pg.font.Font("Font/Poppins2.ttf", 40)
+        self.mid_font = pg.font.Font("Font/Poppins2.ttf", 30)
+        self.small_font = pg.font.Font("Font/Poppins2.ttf", 20)
+
+        self.game_state = Game_state(self.data["balance"])
+        self.rocket = pg.sprite.GroupSingle()
+        self.rocket.add(Rocket(self.game_state))
+
+        self.courbe = Courbe()
+        self.gui = Gui(self.game_state)
+        self.historic = Historic()
+
+        self.timer = Timer()
+
+        if not self.FULLSCREEN:
+            dark_bar()
+
+    def update(self):
+        for event in pg.event.get():
+            if event.type == pg.VIDEORESIZE:
+                hauteur = self.res[1] - self.rocket.sprite.rect.bottom
+                self.res = (event.w, event.h)
+                self.mid_screen = (self.res[0] // 2, self.res[1] // 2)
+                self.gui.video_size_reset()
+                self.timer.video_size_reset()
+                self.rocket.sprite.rect.bottom = self.res[1] - hauteur
+                # screen = pg.display.set_mode(res, pg.RESIZABLE)
+            if event.type == pg.QUIT:
+                self.CHANGESCENE = 1
+                pg.quit()
+                return
+                # exit()
+
+        self.mou = pg.mouse.get_pressed()
+
+        self.pos = pg.mouse.get_pos()
+        self.screen.fill((21, 25, 55))
+
+        self.courbe.update()
+
+        self.gui.update()
+
+        self.historic.update()
+
+        self.rocket.draw(self.screen)
+        self.rocket.update()
+
+        self.timer.update()
+
+        pg.display.update()
+        self.clock.tick(30)
 
 
-    mou = pg.mouse.get_pressed()
+def init():
+    global gen
+    gen = Gen()
+    gen.crea()
 
-    pos = pg.mouse.get_pos()
-    screen.fill((21,25,55))
 
-    courbe.update()
-
-    gui.update()
-
-    historic.update()
-
-    rocket.draw(screen)
-    rocket.update()
-
-    timer.update()
-
-    pg.display.update()
-    clock.tick(30)
