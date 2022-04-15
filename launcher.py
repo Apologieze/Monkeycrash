@@ -1,9 +1,63 @@
 import pygame as pg
 from sys import exit
-from tkinter import Tk
 import ctypes as ct
 import json
 
+class Gen:
+    def crea(self, tempres, fullscreen):
+        self.DEBUG = True
+        self.FULLSCREEN = fullscreen
+        self.CHANGESCENE = 0
+        self.running = False
+        # pg.init()
+        self.tempres = tempres
+        self.res = tempres[0] if self.FULLSCREEN else tempres[1]
+        self.mid_screen = (self.res[0] // 2, self.res[1] // 2)
+        with open('value.json', 'r') as f:
+            self.data = json.load(f)
+
+        pg.display.set_icon(pg.image.load("Image/iconcasino.png"))
+        self.screen = pg.display.set_mode(self.res, pg.FULLSCREEN) if self.FULLSCREEN else pg.display.set_mode(self.res, pg.RESIZABLE)
+        pg.display.set_caption('Launcher')
+        self.clock = pg.time.Clock()
+        self.balance = self.data["balance"]
+
+        "Définition des instances"
+        self.mid_font = pg.font.Font("Font/Poppins2.ttf", 30)
+
+        self.crashbutton = GameButton("Image/crashbutton1.png", "Image/crashbutton2.png", 1)
+        self.gui = GUI()
+
+        if not gen.FULLSCREEN:
+            dark_bar()
+
+    def update(self):
+        for event in pg.event.get():
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_ESCAPE:
+                    self.FULLSCREEN = not self.FULLSCREEN
+                    self.res = self.tempres[0] if self.FULLSCREEN else self.tempres[1]
+                    self.screen = pg.display.set_mode(self.res, pg.FULLSCREEN) if self.FULLSCREEN else pg.display.set_mode(self.res, pg.RESIZABLE)
+                    if not self.FULLSCREEN:
+                        pg.display.set_mode(size=self.res,flags=pg.RESIZABLE)
+            elif event.type == pg.VIDEORESIZE:
+                self.res = (event.w, event.h)
+                if not self.FULLSCREEN:
+                    self.tempres[1] = self.res
+                self.mid_screen = (self.res[0] // 2, self.res[1] // 2)
+                self.gui.resize()
+            elif event.type == pg.QUIT:
+                pg.quit()
+                exit()
+
+        self.pos = pg.mouse.get_pos()
+        self.mou = pg.mouse.get_pressed()
+
+        self.screen.fill((35, 35, 35))
+        self.crashbutton.update()
+        self.gui.update()
+        pg.display.update()
+        self.clock.tick(30)
 
 def dark_bar():
     """Fonction pour passer la fenêtre en thème sombre"""
@@ -14,7 +68,7 @@ def dark_bar():
     value = 2
     value = ct.c_int(value)
     set_window_attribute(hwnd, rendering_policy, ct.byref(value),ct.sizeof(value))
-    pg.display.set_mode((1,1))
+    pg.display.set_mode((gen.res[0]-1,gen.res[1]))
     pg.display.set_mode(gen.res, pg.RESIZABLE)
 
 
@@ -64,57 +118,12 @@ class GUI():
         gen.screen.blit(self.text_balance, self.rect_balance)
 
 
-class Gen:
-    def crea(self):
-        self.DEBUG = True
-        self.FULLSCREEN = False
-        self.CHANGESCENE = 0
-        self.running = False
-        screen_width, screen_height = Tk().winfo_screenwidth(), Tk().winfo_screenheight()
-        self.res = (screen_width, screen_height) if self.FULLSCREEN else (1200, 800)
-        self.mid_screen = (self.res[0] // 2, self.res[1] // 2)
-        with open('value.json', 'r') as f:
-            self.data = json.load(f)
-
-        pg.init()
-        pg.display.set_icon(pg.image.load("Image/icon.png"))
-        self.screen = pg.display.set_mode(self.res, pg.FULLSCREEN) if self.FULLSCREEN else pg.display.set_mode(self.res, pg.RESIZABLE)
-        pg.display.set_caption('Launcher')
-        self.clock = pg.time.Clock()
-        self.balance = self.data["balance"]
-
-        "Définition des instances"
-        self.mid_font = pg.font.Font("Font/Poppins2.ttf", 30)
-
-        self.crashbutton = GameButton("Image/crashbutton1.png", "Image/crashbutton2.png", 1)
-        self.gui = GUI()
-
-        if not gen.FULLSCREEN:
-            dark_bar()
-
-    def update(self):
-        for event in pg.event.get():
-            if event.type == pg.VIDEORESIZE:
-                self.res = (event.w, event.h)
-                self.mid_screen = (self.res[0] // 2, self.res[1] // 2)
-                self.gui.resize()
-            if event.type == pg.QUIT:
-                pg.quit()
-                exit()
-
-        self.pos = pg.mouse.get_pos()
-        self.mou = pg.mouse.get_pressed()
-
-        self.screen.fill((35, 35, 35))
-        self.crashbutton.update()
-        self.gui.update()
-        pg.display.update()
-        self.clock.tick(30)
 
 
 
-def init():
+
+def init(tempres, fullscreen):
     global gen
     gen = Gen()
-    gen.crea()
+    gen.crea(tempres, fullscreen)
 

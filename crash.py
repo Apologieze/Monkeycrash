@@ -1,10 +1,96 @@
 import pygame as pg
 from sys import exit
-from tkinter import Tk
 import ctypes as ct
 from random import randint
 import json
 
+class Gen():
+    def crea(self, tempres, fullscreen):
+        self.DEBUG = True
+        self.FULLSCREEN = fullscreen
+        self.CHANGESCENE = 0
+        self.running = False
+        # pg.init()
+        #screen_width, screen_height = Tk().winfo_screenwidth(), Tk().winfo_screenheight()
+        self.tempres = tempres
+        self.res = tempres[0] if self.FULLSCREEN else tempres[1]
+        self.mid_screen = (self.res[0] // 2, self.res[1] // 2)
+        with open('value.json', 'r') as f:
+            self.data = json.load(f)
+
+        pg.mixer.init(channels=1)
+        pg.mixer.music.load("Music/winning.mp3")
+        pg.display.set_icon(pg.image.load("Image/icon.png"))
+        self.screen = pg.display.set_mode(self.res, pg.FULLSCREEN) if self.FULLSCREEN else pg.display.set_mode(self.res,
+                                                                                                               pg.RESIZABLE)
+        pg.display.set_caption('MonkeyCrash')
+        self.clock = pg.time.Clock()
+        self.bet_balance = 0.0
+        self.initial_bet = 0.0
+        self.live_bet = 0.0
+
+        """Création de toutes les instances"""
+        self.number_font = pg.font.Font("Font/Poppins2.ttf", 90)
+        self.big_font = pg.font.Font("Font/Poppins2.ttf", 40)
+        self.mid_font = pg.font.Font("Font/Poppins2.ttf", 30)
+        self.small_font = pg.font.Font("Font/Poppins2.ttf", 20)
+
+        self.game_state = Game_state(self.data["balance"])
+        self.rocket = pg.sprite.GroupSingle()
+        self.rocket.add(Rocket(self.game_state))
+
+        self.courbe = Courbe()
+        self.gui = Gui(self.game_state)
+        self.historic = Historic()
+
+        self.timer = Timer()
+
+        if not self.FULLSCREEN:
+            dark_bar()
+
+    def update(self):
+        for event in pg.event.get():
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_ESCAPE:
+                    hauteur = self.res[1] - self.rocket.sprite.rect.bottom
+                    self.FULLSCREEN = not self.FULLSCREEN
+                    self.res = self.tempres[0] if self.FULLSCREEN else self.tempres[1]
+                    self.screen = pg.display.set_mode(self.res, pg.FULLSCREEN) if self.FULLSCREEN else pg.display.set_mode(self.res, pg.RESIZABLE)
+                    self.rocket.sprite.rect.bottom = self.res[1] - hauteur
+                    if not self.FULLSCREEN:
+                        pg.display.set_mode(size=self.res,flags=pg.RESIZABLE)
+            elif event.type == pg.VIDEORESIZE:
+                hauteur = self.res[1] - self.rocket.sprite.rect.bottom
+                self.res = (event.w, event.h)
+                if not self.FULLSCREEN:
+                    self.tempres[1] = self.res
+                self.mid_screen = (self.res[0] // 2, self.res[1] // 2)
+                self.gui.video_size_reset()
+                self.timer.video_size_reset()
+                self.rocket.sprite.rect.bottom = self.res[1] - hauteur
+                # screen = pg.display.set_mode(res, pg.RESIZABLE)
+            elif event.type == pg.QUIT:
+                self.CHANGESCENE = 1
+                return
+
+        self.mou = pg.mouse.get_pressed()
+
+        self.pos = pg.mouse.get_pos()
+        self.screen.fill((21, 25, 55))
+
+        self.courbe.update()
+
+        self.gui.update()
+
+        self.historic.update()
+
+        self.rocket.draw(self.screen)
+        self.rocket.update()
+
+        self.timer.update()
+
+        pg.display.update()
+        self.clock.tick(30)
 
 def dark_bar():
     """Fonction pour passer la fenêtre en thème sombre"""
@@ -381,88 +467,9 @@ def rocket_video_reset(h):
     gen.rocket.sprite.rect.bottom = gen.res[1]-hauteur
 
 
-class Gen():
-    def crea(self):
-        self.DEBUG = True
-        self.FULLSCREEN = False
-        self.CHANGESCENE = 0
-        self.running = False
-        screen_width, screen_height = Tk().winfo_screenwidth(), Tk().winfo_screenheight()
-        self.res = (screen_width, screen_height) if self.FULLSCREEN else (1200, 800)
-        self.mid_screen = (self.res[0] // 2, self.res[1] // 2)
-        with open('value.json', 'r') as f:
-            self.data = json.load(f)
-
-        pg.init()
-        pg.mixer.init(channels=1)
-        pg.mixer.music.load("Music/winning.mp3")
-        pg.display.set_icon(pg.image.load("Image/icon.png"))
-        self.screen = pg.display.set_mode(self.res, pg.FULLSCREEN) if self.FULLSCREEN else pg.display.set_mode(self.res,
-                                                                                                               pg.RESIZABLE)
-        pg.display.set_caption('MonkeyCrash')
-        self.clock = pg.time.Clock()
-        self.bet_balance = 0.0
-        self.initial_bet = 0.0
-        self.live_bet = 0.0
-
-        """Création de toutes les instances"""
-        self.number_font = pg.font.Font("Font/Poppins2.ttf", 90)
-        self.big_font = pg.font.Font("Font/Poppins2.ttf", 40)
-        self.mid_font = pg.font.Font("Font/Poppins2.ttf", 30)
-        self.small_font = pg.font.Font("Font/Poppins2.ttf", 20)
-
-        self.game_state = Game_state(self.data["balance"])
-        self.rocket = pg.sprite.GroupSingle()
-        self.rocket.add(Rocket(self.game_state))
-
-        self.courbe = Courbe()
-        self.gui = Gui(self.game_state)
-        self.historic = Historic()
-
-        self.timer = Timer()
-
-        if not self.FULLSCREEN:
-            dark_bar()
-
-    def update(self):
-        for event in pg.event.get():
-            if event.type == pg.VIDEORESIZE:
-                hauteur = self.res[1] - self.rocket.sprite.rect.bottom
-                self.res = (event.w, event.h)
-                self.mid_screen = (self.res[0] // 2, self.res[1] // 2)
-                self.gui.video_size_reset()
-                self.timer.video_size_reset()
-                self.rocket.sprite.rect.bottom = self.res[1] - hauteur
-                # screen = pg.display.set_mode(res, pg.RESIZABLE)
-            if event.type == pg.QUIT:
-                self.CHANGESCENE = 1
-                pg.quit()
-                return
-                # exit()
-
-        self.mou = pg.mouse.get_pressed()
-
-        self.pos = pg.mouse.get_pos()
-        self.screen.fill((21, 25, 55))
-
-        self.courbe.update()
-
-        self.gui.update()
-
-        self.historic.update()
-
-        self.rocket.draw(self.screen)
-        self.rocket.update()
-
-        self.timer.update()
-
-        pg.display.update()
-        self.clock.tick(30)
-
-
-def init():
+def init(tempres, fullscreen):
     global gen
     gen = Gen()
-    gen.crea()
+    gen.crea(tempres, fullscreen)
 
 
