@@ -73,6 +73,7 @@ class Gen():
                 self.rocket.sprite.rect.bottom = self.res[1] - hauteur
                 # screen = pg.display.set_mode(res, pg.RESIZABLE)
             elif event.type == pg.QUIT:
+                pg.mixer.music.stop()
                 self.CHANGESCENE = 1
                 return
 
