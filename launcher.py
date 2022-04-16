@@ -40,6 +40,8 @@ class Gen:
                     self.screen = pg.display.set_mode(self.res, pg.FULLSCREEN) if self.FULLSCREEN else pg.display.set_mode(self.res, pg.RESIZABLE)
                     if not self.FULLSCREEN:
                         pg.display.set_mode(size=self.res,flags=pg.RESIZABLE)
+                    self.mid_screen = (self.res[0] // 2, self.res[1] // 2)
+                    self.gui.resize()
             elif event.type == pg.VIDEORESIZE:
                 self.res = (event.w, event.h)
                 if not self.FULLSCREEN:

@@ -59,6 +59,9 @@ class Gen():
                     self.rocket.sprite.rect.bottom = self.res[1] - hauteur
                     if not self.FULLSCREEN:
                         pg.display.set_mode(size=self.res,flags=pg.RESIZABLE)
+                    self.mid_screen = (self.res[0] // 2, self.res[1] // 2)
+                    self.gui.video_size_reset()
+                    self.timer.video_size_reset()
             elif event.type == pg.VIDEORESIZE:
                 hauteur = self.res[1] - self.rocket.sprite.rect.bottom
                 self.res = (event.w, event.h)
