@@ -20,7 +20,7 @@ class Gen():
 
         pg.mixer.init(channels=1)
         pg.mixer.music.load("Music/winning.mp3")
-        pg.display.set_icon(pg.image.load("Image/icon.png"))
+        pg.display.set_icon(pg.image.load("Image/Crash/icon.png"))
         self.screen = pg.display.set_mode(self.res, pg.FULLSCREEN) if self.FULLSCREEN else pg.display.set_mode(self.res,
                                                                                                                pg.RESIZABLE)
         pg.display.set_caption('MonkeyCrash')
@@ -35,7 +35,7 @@ class Gen():
         self.mid_font = pg.font.Font("Font/Poppins2.ttf", 30)
         self.small_font = pg.font.Font("Font/Poppins2.ttf", 20)
 
-        self.game_state = Game_state(self.data["balance"])
+        self.game_state = Game_state(float(self.data["balance"]))
         self.rocket = pg.sprite.GroupSingle()
         self.rocket.add(Rocket(self.game_state))
 
@@ -45,13 +45,11 @@ class Gen():
 
         self.timer = Timer()
 
-        if not self.FULLSCREEN:
-            dark_bar()
 
     def update(self):
         for event in pg.event.get():
             if event.type == pg.KEYDOWN:
-                if event.key == pg.K_ESCAPE:
+                if event.key == pg.K_F11:
                     hauteur = self.res[1] - self.rocket.sprite.rect.bottom
                     self.FULLSCREEN = not self.FULLSCREEN
                     self.res = self.tempres[0] if self.FULLSCREEN else self.tempres[1]
@@ -62,6 +60,10 @@ class Gen():
                     self.mid_screen = (self.res[0] // 2, self.res[1] // 2)
                     self.gui.video_size_reset()
                     self.timer.video_size_reset()
+                elif event.key == pg.K_ESCAPE:
+                    pg.mixer.music.stop()
+                    self.CHANGESCENE = 1
+                    return
             elif event.type == pg.VIDEORESIZE:
                 hauteur = self.res[1] - self.rocket.sprite.rect.bottom
                 self.res = (event.w, event.h)
@@ -96,17 +98,6 @@ class Gen():
         pg.display.update()
         self.clock.tick(30)
 
-def dark_bar():
-    """Fonction pour passer la fenêtre en thème sombre"""
-    DWMWA_USE_IMMERSIVE_DARK_MODE = 20
-    set_window_attribute = ct.windll.dwmapi.DwmSetWindowAttribute
-    hwnd = pg.display.get_wm_info()["window"]
-    rendering_policy = DWMWA_USE_IMMERSIVE_DARK_MODE
-    value = 2
-    value = ct.c_int(value)
-    set_window_attribute(hwnd, rendering_policy, ct.byref(value),ct.sizeof(value))
-    pg.display.set_mode((gen.res[0]-1,gen.res[1]))
-    pg.display.set_mode(gen.res, pg.RESIZABLE)
 
 class Game_state():
     def __init__(self,balance=0.0):
@@ -137,9 +128,9 @@ class Rocket(pg.sprite.Sprite):
     def __init__(self,game):
         super().__init__()
         self.game = game
-        rocket1 = pg.image.load('Image/mrocket1.png').convert_alpha()
-        rocket2 = pg.image.load('Image/mrocket2.png').convert_alpha()
-        rocket3 = pg.image.load('Image/mrocket3.png').convert_alpha()
+        rocket1 = pg.image.load('Image/Crash/mrocket1.png').convert_alpha()
+        rocket2 = pg.image.load('Image/Crash/mrocket2.png').convert_alpha()
+        rocket3 = pg.image.load('Image/Crash/mrocket3.png').convert_alpha()
 
         self.rocket_anim = [rocket1,rocket2,rocket3]
         self.rocket_index = 1
@@ -306,7 +297,7 @@ class Gui():
 
     def reset_live_bet(self):
         self.text_live_bet = gen.mid_font.render("Mise en cours: "+str(gen.live_bet)+'¥', True, 'white')
-        self.text_live_bet_rect = self.text_live_bet.get_rect(midleft = (self.screen_rect.left-310, self.screen_rect.centery+15))
+        self.text_live_bet_rect = self.text_live_bet.get_rect(midright=(self.screen_rect.left - 10, self.screen_rect.centery + 15))
 
     def update(self):
         pg.draw.rect(gen.screen, "#262626", self.background_rect)
@@ -350,7 +341,8 @@ class Button():
         change = [100,10,1,0.1]
         if self.n_id >= 0:
             if gen.bet_balance + change[self.n_id] > gen.game_state.balance:
-                gen.bet_balance = gen.game_state.balance
+                temp = str(gen.game_state.balance).split('.')
+                gen.bet_balance = round(float(temp[0])+float("0."+temp[1][:min(2,len(temp[1]))]),2)
             else:
                 gen.bet_balance = round(gen.bet_balance+change[self.n_id],1)
         elif self.n_id == -2:
@@ -462,9 +454,11 @@ def new_round():
     gen.gui.reset_live_bet()
 
 def change_balance(n):
-    gen.game_state.balance += n
+    # gen.game_state.balance += n
+    temp = str(gen.game_state.balance+n).split('.')
+    gen.game_state.balance = round(float(temp[0]) + float("0." + temp[1][:min(2, len(temp[1]))]), 2)
     with open('value.json', 'w') as json_file:
-        json.dump({"balance":round(gen.game_state.balance,2)}, json_file)
+        json.dump({"balance":gen.game_state.balance}, json_file)
 
 def rocket_video_reset(h):
     hauteur = gen.res[1]-gen.rocket.sprite.rect.bottom

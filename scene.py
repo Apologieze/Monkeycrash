@@ -1,5 +1,6 @@
 import launcher
 import crash
+import coinflip
 import pygame as pg
 
 class Scene():
@@ -9,7 +10,7 @@ class Scene():
 
     def __init__(self):
         pg.init()
-        self.scenes = [launcher, crash]
+        self.scenes = [launcher, crash, coinflip]
         self.FULLSCREEN = False
         self.res = [(pg.display.Info().current_w, pg.display.Info().current_h),(1200, 800)]
         self.change_scene(1)

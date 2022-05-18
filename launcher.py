@@ -16,7 +16,7 @@ class Gen:
         with open('value.json', 'r') as f:
             self.data = json.load(f)
 
-        pg.display.set_icon(pg.image.load("Image/iconcasino.png"))
+        pg.display.set_icon(pg.image.load("Image/Launcher/iconcasino.png"))
         self.screen = pg.display.set_mode(self.res, pg.FULLSCREEN) if self.FULLSCREEN else pg.display.set_mode(self.res, pg.RESIZABLE)
         pg.display.set_caption('Launcher')
         self.clock = pg.time.Clock()
@@ -25,7 +25,8 @@ class Gen:
         "Définition des instances"
         self.mid_font = pg.font.Font("Font/Poppins2.ttf", 30)
 
-        self.crashbutton = GameButton("Image/crashbutton1.png", "Image/crashbutton2.png", 1)
+        self.crashbutton = GameButton("Image/Crash/crashbutton1.png", "Image/Crash/crashbutton2.png", 0)
+        self.coinflipbutton = GameButton("Image/Monkeycoin/coinflipbutton1.png", "Image/Monkeycoin/coinflipbutton2.png", 1)
         self.gui = GUI()
 
         if not gen.FULLSCREEN:
@@ -34,7 +35,7 @@ class Gen:
     def update(self):
         for event in pg.event.get():
             if event.type == pg.KEYDOWN:
-                if event.key == pg.K_ESCAPE:
+                if event.key == pg.K_F11:
                     self.FULLSCREEN = not self.FULLSCREEN
                     self.res = self.tempres[0] if self.FULLSCREEN else self.tempres[1]
                     self.screen = pg.display.set_mode(self.res, pg.FULLSCREEN) if self.FULLSCREEN else pg.display.set_mode(self.res, pg.RESIZABLE)
@@ -57,6 +58,7 @@ class Gen:
 
         self.screen.fill((35, 35, 35))
         self.crashbutton.update()
+        self.coinflipbutton.update()
         self.gui.update()
         pg.display.update()
         self.clock.tick(30)
@@ -79,7 +81,7 @@ class GameButton():
         self.image_passive = pg.image.load(image1).convert_alpha()
         self.image_active = pg.image.load(image2).convert_alpha()
         self.image = self.image_passive
-        self.rect = self.image.get_rect(topleft=(50,50))
+        self.rect = self.image.get_rect(topleft=(50+350*id,70))
         self.base_height = self.rect.bottom
         self.anim_index = 0
         self.id = id
@@ -91,16 +93,14 @@ class GameButton():
                 self.click()
             if self.anim_index < 4:
                 self.anim_index += 1
-        else:
-            if self.anim_index != 0:
-                self.image = self.image_passive
-                self.anim_index -= 1
+        elif self.anim_index != 0:
+            self.image = self.image_passive
+            self.anim_index -= 1
         self.rect.bottom = self.base_height - self.anim_index
         gen.screen.blit(self.image,self.rect)
 
     def click(self):
-        if self.id == 1:
-            gen.CHANGESCENE = 2
+        gen.CHANGESCENE = self.id + 2
 
 
 class GUI():
@@ -109,7 +109,7 @@ class GUI():
 
     def resize(self):
         self.text_balance = gen.mid_font.render("¥" + str(gen.balance), True, 'white')
-        self.rect_balance = self.text_balance.get_rect(topright=(gen.res[0] - 50, 5))
+        self.rect_balance = self.text_balance.get_rect(topright=(gen.res[0] - 20, 10))
         self.back_rect = self.rect_balance.copy()
         self.back_rect.width += 20
         self.back_rect.height += 10
