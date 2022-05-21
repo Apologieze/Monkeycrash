@@ -1,4 +1,5 @@
 import pygame as pg
+from random import randint
 import json
 
 class Gen:
@@ -29,6 +30,7 @@ class Gen:
 
         self.coin = Coin()
         self.gui = GUI()
+
 
     def update(self):
         # sourcery skip: merge-duplicate-blocks, remove-pass-elif, remove-redundant-if
@@ -136,7 +138,10 @@ class Coin():
     def __init__(self):
         self.anim_coin = []
         self.frame = 0
-        self.speed = 0.07
+        self.speed = 0.8
+        self.acceleration = True
+        self.final = None
+        self.i = 0
         for i in range(60):
             self.anim_coin.append(pg.image.load(f'Image/Monkeycoin/Frame/frame_{i}_delay-0.03s.png').convert_alpha())
         self.image = self.anim_coin[self.frame]
@@ -146,14 +151,102 @@ class Coin():
     def resize(self):
         self.rect.center = (gen.mid_screen[0], gen.mid_screen[1] - gen.mid_screen[1] // 4)
 
+    def start_play(self,final,win):
+        templist = [0,31,0]
+        self.win = win
+        gen.running = True
+        self.acceleration = True
+        self.final = templist[final]
+
+    def playing_round(self):
+        if self.acceleration:
+            self.speed += 0.02
+            if self.speed > 4:
+                self.acceleration = False
+        else:
+            if self.speed > 0.8:
+                self.speed -= 0.02
+            if self.speed < 1 and int(self.frame) == self.final:
+                self.end_play()
+        # print(self.speed)
+
+    def end_play(self):
+        self.final = None
+        self.speed = 0
+        self.i = 1
+        if self.win:
+            gen.live_bet *= 2
+            gen.gui.reset_live_bet()
+            change_balance(gen.live_bet)
+        else:
+            gen.live_bet = 0
+
+    def animate(self):
+        self.frame += self.speed
+        if self.frame >= 60:
+            self.frame = 0
+        self.image = self.anim_coin[int(self.frame)]
+
     def update(self):
+        if self.final is not None:
+            self.playing_round()
+        elif self.i != 0:
+            self.i += 1
+            if self.i > 90:
+                self.i = 0
+                gen.running = False
+                gen.live_bet = 0
+                self.speed = 0.8
+
+        self.animate()
         gen.screen.blit(self.image, self.rect)
+
+class Button_color():
+    def __init__(self, n_id, passsive_color, active_color):
+        self.n_id = n_id
+        self.passive_color = passsive_color
+        self.active_color = active_color
+        self.color = passsive_color
+        self.image_circle = pg.image.load('Image/Monkeycoin/Button_color/circle.png').convert_alpha()
+        self.resize()
+
+    def resize(self):
+        self.rect_circle = self.image_circle.get_rect(center=(gen.coin.rect.centerx+200*self.n_id, gen.coin.rect.centery+120))
+        self.back_rect = self.rect_circle.copy()
+        self.back_rect.width += 40
+        self.back_rect.height += 40
+        self.back_rect.center = self.rect_circle.center
+
+    def result(self,n_id):
+        if randint(1,100) > 56:
+            return (True,n_id)
+        else:
+            return (False,-n_id)
+
+    def click_event(self):
+        temp_result = self.result(self.n_id)
+        change_balance(-gen.live_bet)
+        gen.coin.start_play(temp_result[1], temp_result[0])
+
+
+    def update(self):
+        if self.back_rect.collidepoint(gen.pos):
+            self.color = self.active_color
+            if gen.mou[0]:
+                self.click_event()
+        else:
+            self.color = self.passive_color
+        pg.draw.rect(gen.screen, self.color, self.back_rect, border_radius=11)
+        gen.screen.blit(self.image_circle, self.rect_circle)
+
 
 class GUI():
     def __init__(self):
         self.display_balance = DisplayBalance()
         self.screen_rect = pg.Rect(gen.res[0] - 555, gen.res[1] - 70, 330, 60)
         self.text_screen = gen.big_font.render(str(gen.bet_balance) + '¥', True, 'white')
+        self.button_left = Button_color(-1, "#ffe236", "#ffac36")
+        self.button_right = Button_color(1, "#ff3c35", "#cc2b36")
 
         self.video_size_reset()
 
@@ -177,10 +270,12 @@ class GUI():
 
     def reset_live_bet(self):
         self.text_live_bet = gen.mid_font.render("Mise en cours: " + str(gen.live_bet) + '¥', True, 'white')
-        self.text_live_bet_rect = self.text_live_bet.get_rect(midright=(self.screen_rect.left - 10, self.screen_rect.centery + 15))
+        self.text_live_bet_rect = self.text_live_bet.get_rect(midright=(self.screen_rect.left - 10, self.screen_rect.centery))
 
     def resize(self):
         gen.coin.resize()
+        self.button_left.resize()
+        self.button_right.resize()
         self.display_balance.resize()
         self.video_size_reset()
 
@@ -196,14 +291,21 @@ class GUI():
             self.one_button.update()
             self.cents_button.update()
             self.x_button.update()
-            self.cashout = False
-        else:
-            self.reset_live_bet()
 
         if gen.live_bet > 0:
             gen.screen.blit(self.text_live_bet, self.text_live_bet_rect)
+            if not gen.running:
+                self.button_left.update()
+                self.button_right.update()
 
         gen.screen.blit(self.text_screen, self.text_screen_rect)
+
+def change_balance(n):
+    temp = str(gen.balance+n).split('.')
+    gen.balance = round(float(temp[0]) + float("0." + temp[1][:min(2, len(temp[1]))]), 2)
+    gen.gui.display_balance.resize()
+    with open('value.json', 'w') as json_file:
+        json.dump({"balance":gen.balance}, json_file)
 
 
 def init(tempres, fullscreen):
