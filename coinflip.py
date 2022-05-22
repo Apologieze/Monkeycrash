@@ -160,7 +160,8 @@ class Coin():
 
     def playing_round(self):
         if self.acceleration:
-            self.speed += 0.02
+            self.speed += self.speed*0.025
+            #print(self.speed)
             if self.speed > 4:
                 self.acceleration = False
         else:
