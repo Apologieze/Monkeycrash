@@ -7,7 +7,7 @@ Dependencies: Python, Pygame
 Pygame can be download with pip:
 
 `pip install pygame`
-or executing "**dependecies.py**"
+or executing "**pygame.bat**"
 
 **[Download the Project][1]**
 
