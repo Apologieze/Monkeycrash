@@ -73,7 +73,7 @@ class DisplayBalance():
         self.resize()
 
     def resize(self):
-        self.text_balance = gen.mid_font.render("¥" + str(gen.balance), True, 'white')
+        self.text_balance = gen.mid_font.render(f"¥{str(gen.balance)}", True, 'white')
         self.rect_balance = self.text_balance.get_rect(topright=(gen.res[0] - 20, 10))
         self.back_rect = self.rect_balance.copy()
         self.back_rect.width += 20
@@ -103,7 +103,7 @@ class Button():
         if self.n_id >= 0:
             if gen.bet_balance + change[self.n_id] > gen.balance:
                 temp = str(gen.balance).split('.')
-                gen.bet_balance = float(temp[0])+float("0."+temp[1][:min(2,len(temp[1]))])
+                gen.bet_balance = float(temp[0]) + float(f"0.{temp[1][:min(2,len(temp[1]))]}")
             else:
                 gen.bet_balance = round(gen.bet_balance+change[self.n_id],1)
         elif self.n_id == -2:
@@ -136,14 +136,12 @@ class Button():
 
 class Coin():
     def __init__(self):
-        self.anim_coin = []
+        self.anim_coin = [pg.image.load(f'Image/Monkeycoin/Frame/frame_{i}_delay-0.03s.png').convert_alpha() for i in range(60)]
         self.frame = 0
         self.speed = 0.8
         self.acceleration = True
         self.final = None
         self.i = 0
-        for i in range(60):
-            self.anim_coin.append(pg.image.load(f'Image/Monkeycoin/Frame/frame_{i}_delay-0.03s.png').convert_alpha())
         self.image = self.anim_coin[self.frame]
         self.rect = self.image.get_rect()
         self.resize()
@@ -219,10 +217,7 @@ class Button_color():
         self.back_rect.center = self.rect_circle.center
 
     def result(self,n_id):
-        if randint(1,100) > 56:
-            return (True,n_id)
-        else:
-            return (False,-n_id)
+        return (True, n_id) if randint(1,100) > 56 else (False, -n_id)
 
     def click_event(self):
         temp_result = self.result(self.n_id)
@@ -245,7 +240,8 @@ class GUI():
     def __init__(self):
         self.display_balance = DisplayBalance()
         self.screen_rect = pg.Rect(gen.res[0] - 555, gen.res[1] - 70, 330, 60)
-        self.text_screen = gen.big_font.render(str(gen.bet_balance) + '¥', True, 'white')
+        self.text_screen = gen.big_font.render(f'{str(gen.bet_balance)}¥', True, 'white')
+
         self.button_left = Button_color(-1, "#ffe236", "#ffac36")
         self.button_right = Button_color(1, "#ff3c35", "#cc2b36")
 
@@ -266,11 +262,11 @@ class GUI():
         self.reset_live_bet()
 
     def reset_text(self):
-        self.text_screen = gen.big_font.render(str(gen.bet_balance) + '¥', True, 'white')
+        self.text_screen = gen.big_font.render(f'{str(gen.bet_balance)}¥', True, 'white')
         self.text_screen_rect = self.text_screen.get_rect(center=self.screen_rect.center)
 
     def reset_live_bet(self):
-        self.text_live_bet = gen.mid_font.render("Mise en cours: " + str(gen.live_bet) + '¥', True, 'white')
+        self.text_live_bet = gen.mid_font.render(f"Mise en cours: {str(gen.live_bet)}¥", True, 'white')
         self.text_live_bet_rect = self.text_live_bet.get_rect(midright=(self.screen_rect.left - 10, self.screen_rect.centery))
 
     def resize(self):
