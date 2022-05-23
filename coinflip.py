@@ -304,7 +304,10 @@ class GUI():
 def change_balance(n):
     """Change the in game balance and the local balance file"""
     temp = str(gen.balance+n).split('.')
-    gen.balance = round(float(temp[0]) + float("0." + temp[1][:min(2, len(temp[1]))]), 2)
+    gen.balance = round(float(temp[0]) + float(f"0.{temp[1][:min(2, len(temp[1]))]}"), 2)
+    if len(temp[1])>2:
+        if temp[1][2]=='9':
+            gen.balance = round(gen.balance+0.01,2)
     gen.gui.display_balance.resize()
     with open('value.json', 'w') as json_file:
         json.dump({"balance":gen.balance}, json_file)

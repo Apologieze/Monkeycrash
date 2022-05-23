@@ -452,8 +452,11 @@ def new_round():
 
 def change_balance(n):
     """Change the in game balance and the local balance file"""
-    temp = str(gen.game_state.balance+n).split('.')
-    gen.game_state.balance = round(float(temp[0]) + float("0." + temp[1][:min(2, len(temp[1]))]), 2)
+    temp = str(gen.game_state.balance + n).split('.')
+    gen.game_state.balance = round(float(temp[0]) + float(f"0.{temp[1][:min(2, len(temp[1]))]}"), 2)
+    if len(temp[1]) > 2:
+        if temp[1][2] == '9':
+            gen.game_state.balance = round(gen.game_state.balance + 0.01, 2)
     with open('value.json', 'w') as json_file:
         json.dump({"balance":gen.game_state.balance}, json_file)
 
