@@ -4,6 +4,7 @@ import ctypes as ct
 import json
 
 class Gen:
+    """A class that generate the launcher to launch game"""
     def crea(self, tempres, fullscreen):
         self.DEBUG = True
         self.FULLSCREEN = fullscreen
