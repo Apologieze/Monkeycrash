@@ -6,7 +6,7 @@ import json
 
 class Gen():
     def crea(self, tempres, fullscreen):
-        self.DEBUG = True
+        self.DEBUG = False
         self.FULLSCREEN = fullscreen
         self.CHANGESCENE = 0
         self.running = False
@@ -73,7 +73,6 @@ class Gen():
                 self.gui.video_size_reset()
                 self.timer.video_size_reset()
                 self.rocket.sprite.rect.bottom = self.res[1] - hauteur
-                # screen = pg.display.set_mode(res, pg.RESIZABLE)
             elif event.type == pg.QUIT:
                 pg.mixer.music.stop()
                 self.CHANGESCENE = 1

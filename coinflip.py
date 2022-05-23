@@ -162,7 +162,7 @@ class Coin():
         if self.acceleration:
             self.speed += self.speed*0.025
             #print(self.speed)
-            if self.speed > 4:
+            if self.speed > 5:
                 self.acceleration = False
         else:
             if self.speed > 0.8:

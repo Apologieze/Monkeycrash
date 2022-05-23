@@ -4,6 +4,7 @@ import coinflip
 import pygame as pg
 
 class Scene():
+    """Gestionnaire des différentes scène qui permet de naviguer facilement entre les différents jeu et le launcher"""
     def change_scene(self,nb):
         self.current_scene = self.scenes[nb-1]
         self.current_scene.init(self.res, self.FULLSCREEN)
