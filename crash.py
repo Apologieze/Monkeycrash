@@ -1,17 +1,14 @@
 import pygame as pg
-from sys import exit
-import ctypes as ct
 from random import randint
 import json
 
 class Gen():
+    """A class that generate the crash game"""
     def crea(self, tempres, fullscreen):
-        self.DEBUG = True
+        self.DEBUG = False
         self.FULLSCREEN = fullscreen
         self.CHANGESCENE = 0
         self.running = False
-        # pg.init()
-        #screen_width, screen_height = Tk().winfo_screenwidth(), Tk().winfo_screenheight()
         self.tempres = tempres
         self.res = tempres[0] if self.FULLSCREEN else tempres[1]
         self.mid_screen = (self.res[0] // 2, self.res[1] // 2)
@@ -41,7 +38,7 @@ class Gen():
 
         self.courbe = Courbe()
         self.gui = Gui(self.game_state)
-        self.historic = Historic()
+        self.history = History()
 
         self.timer = Timer()
 
@@ -73,7 +70,6 @@ class Gen():
                 self.gui.video_size_reset()
                 self.timer.video_size_reset()
                 self.rocket.sprite.rect.bottom = self.res[1] - hauteur
-                # screen = pg.display.set_mode(res, pg.RESIZABLE)
             elif event.type == pg.QUIT:
                 pg.mixer.music.stop()
                 self.CHANGESCENE = 1
@@ -88,7 +84,7 @@ class Gen():
 
         self.gui.update()
 
-        self.historic.update()
+        self.history.update()
 
         self.rocket.draw(self.screen)
         self.rocket.update()
@@ -169,7 +165,7 @@ class Rocket(pg.sprite.Sprite):
         if self.fall_index < 50:
             if self.fall_index == 0:
                 new_round()
-                gen.historic.add_value(self.multi_max,self.multi_color)
+                gen.history.add_value(self.multi_max,self.multi_color)
                 self.multi_color = "#ff0000"
                 self.explosion.play()
             self.fall_index += 1
@@ -421,7 +417,8 @@ class Timer():
                 pg.mixer.music.play()
                 self.reset()
 
-class Historic():
+class History():
+    """Show the last multipliers"""
     def __init__(self):
         self.text_list = []
         self.rect_list = []
@@ -454,7 +451,7 @@ def new_round():
     gen.gui.reset_live_bet()
 
 def change_balance(n):
-    # gen.game_state.balance += n
+    """Change the in game balance and the local balance file"""
     temp = str(gen.game_state.balance+n).split('.')
     gen.game_state.balance = round(float(temp[0]) + float("0." + temp[1][:min(2, len(temp[1]))]), 2)
     with open('value.json', 'w') as json_file:
@@ -466,8 +463,7 @@ def rocket_video_reset(h):
 
 
 def init(tempres, fullscreen):
+    """Function used to start the game"""
     global gen
     gen = Gen()
     gen.crea(tempres, fullscreen)
-
-

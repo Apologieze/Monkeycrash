@@ -3,6 +3,7 @@ from random import randint
 import json
 
 class Gen:
+    """A class that generate the coinflip game"""
     def crea(self, tempres, fullscreen):
         self.DEBUG = True
         self.FULLSCREEN = fullscreen
@@ -115,7 +116,6 @@ class Button():
         self.receiver.reset_text()
 
     def update(self):
-        #color = self.color_active if self.rect.collidepoint(pos) and not mou[0] else self.color_passive
         if self.rect.collidepoint(gen.pos):
             if gen.mou[0]:
                 color = self.color_passive
@@ -162,7 +162,7 @@ class Coin():
         if self.acceleration:
             self.speed += self.speed*0.025
             #print(self.speed)
-            if self.speed > 4:
+            if self.speed > 5:
                 self.acceleration = False
         else:
             if self.speed > 0.8:
@@ -302,6 +302,7 @@ class GUI():
         gen.screen.blit(self.text_screen, self.text_screen_rect)
 
 def change_balance(n):
+    """Change the in game balance and the local balance file"""
     temp = str(gen.balance+n).split('.')
     gen.balance = round(float(temp[0]) + float("0." + temp[1][:min(2, len(temp[1]))]), 2)
     gen.gui.display_balance.resize()
@@ -310,6 +311,7 @@ def change_balance(n):
 
 
 def init(tempres, fullscreen):
+    """Function used to start the game"""
     global gen
     gen = Gen()
     gen.crea(tempres, fullscreen)
