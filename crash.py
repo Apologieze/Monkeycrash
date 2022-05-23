@@ -144,7 +144,7 @@ class Rocket(pg.sprite.Sprite):
         self.live_multi = 1.0
         self.multi_color = "white"
         self.multi_add = 0.003
-        self.text_multi = gen.big_font.render(str(self.live_multi)+'x', True, 'white')
+        self.text_multi = gen.big_font.render(f'{self.live_multi}x', True, 'white')
         self.text_multi_rect = self.text_multi.get_rect(midleft=(self.rect.midright))
 
     def get_multiplicateur(self):
@@ -201,7 +201,7 @@ class Rocket(pg.sprite.Sprite):
                         self.multi_color = "#63ffa9"
                 else:
                     self.multi_color = "#7adfff"
-        self.text_multi = gen.big_font.render(str(self.live_multi)[0:4]+'x', True, self.multi_color)
+        self.text_multi = gen.big_font.render(f'{str(self.live_multi)[:4]}x', True, self.multi_color)
         if self.left:
             self.text_multi_rect = self.text_multi.get_rect(midright=(self.rect.left, self.rect.centery))
             if self.live_multi > 9:
@@ -259,9 +259,9 @@ class Gui():
         self.game = game
         self.cashout = False
         self.screen_rect = pg.Rect(gen.res[0]-555, gen.res[1]-70, 330,60)
-        self.text_screen = gen.big_font.render(str(gen.bet_balance)+'¥', True, 'white')
+        self.text_screen = gen.big_font.render(f'{str(gen.bet_balance)}¥', True, 'white')
         self.static_text = gen.big_font.render("Balance:", True, '#fab3fe')
-        self.balance_text = gen.big_font.render(str(self.game.balance) + '¥', True, '#fab3fe')
+        self.balance_text = gen.big_font.render(f'{str(self.game.balance)}¥', True, '#fab3fe')
 
         self.video_size_reset()
 
@@ -283,16 +283,16 @@ class Gui():
         self.reset_live_bet()
 
     def reset_text(self):
-        self.text_screen = gen.big_font.render(str(gen.bet_balance)+'¥', True, 'white')
+        self.text_screen = gen.big_font.render(f'{str(gen.bet_balance)}¥', True, 'white')
         self.text_screen_rect = self.text_screen.get_rect(center = self.screen_rect.center)
 
     def reset_balance_text(self):
         aff_balance = str(int(self.game.balance))+str(self.game.balance%1)[1:4]
-        self.balance_text = gen.big_font.render(aff_balance + '¥', True, '#fab3fe')
+        self.balance_text = gen.big_font.render(f'{aff_balance}¥', True, '#fab3fe')
         self.balance_text_rect = self.balance_text.get_rect(bottomleft=(20, gen.res[1] - 20))
 
     def reset_live_bet(self):
-        self.text_live_bet = gen.mid_font.render("Mise en cours: "+str(gen.live_bet)+'¥', True, 'white')
+        self.text_live_bet = gen.mid_font.render(f"Mise en cours: {str(gen.live_bet)}¥", True, 'white')
         self.text_live_bet_rect = self.text_live_bet.get_rect(midright=(self.screen_rect.left - 10, self.screen_rect.centery + 15))
 
     def update(self):
@@ -338,7 +338,7 @@ class Button():
         if self.n_id >= 0:
             if gen.bet_balance + change[self.n_id] > gen.game_state.balance:
                 temp = str(gen.game_state.balance).split('.')
-                gen.bet_balance = round(float(temp[0])+float("0."+temp[1][:min(2,len(temp[1]))]),2)
+                gen.bet_balance = round(float(temp[0]) + float(f"0.{temp[1][:min(2,len(temp[1]))]}"), 2)
             else:
                 gen.bet_balance = round(gen.bet_balance+change[self.n_id],1)
         elif self.n_id == -2:
