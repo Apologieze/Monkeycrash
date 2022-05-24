@@ -4,7 +4,7 @@ A gambling crash game made for a school project with pygame
 # Download & install
 Dependencies: Python, Pygame
 
-Pygame can be download with pip:
+Pygame can be download with <a href="https://pypi.org/project/pip/">pip</a>:
 
 `pip install pygame`
 or executing "**pygame.bat**"
