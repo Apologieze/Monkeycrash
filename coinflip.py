@@ -217,7 +217,7 @@ class Button_color():
         self.back_rect.center = self.rect_circle.center
 
     def result(self,n_id):
-        return (True, n_id) if randint(1,100) > 56 else (False, -n_id)
+        return (True, n_id) if randint(1,100) > 50 else (False, -n_id)
 
     def click_event(self):
         temp_result = self.result(self.n_id)
